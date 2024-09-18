@@ -4,6 +4,7 @@ pragma solidity ^0.8.27;
 import "./Context.sol";
 import "./IERC20.sol";
 import "./IERC20Metadata.sol";
+import "./SafeMath.sol";
 
 /**
  * @dev Implementation of the {IERC20} interface.
@@ -174,7 +175,7 @@ contract ERC20 is Context, IERC20, IERC20Metadata {
      */
     function increaseAllowance(address spender, uint256 addedValue) public virtual returns (bool) {
         address owner = _msgSender();
-        _approve(owner, spender, allowance(owner, spender) + addedValue);
+        _approve(owner, spender, SafeMath.add(allowance(owner, spender), addedValue));
         return true;
     }
 
@@ -197,7 +198,7 @@ contract ERC20 is Context, IERC20, IERC20Metadata {
         uint256 currentAllowance = allowance(owner, spender);
         require(currentAllowance >= subtractedValue, "ERC20: decreased allowance below zero");
         unchecked {
-            _approve(owner, spender, currentAllowance - subtractedValue);
+            _approve(owner, spender, SafeMath.sub(currentAllowance, subtractedValue));
         }
 
         return true;
@@ -226,10 +227,10 @@ contract ERC20 is Context, IERC20, IERC20Metadata {
         uint256 fromBalance = _balances[from];
         require(fromBalance >= amount, "ERC20: transfer amount exceeds balance");
         unchecked {
-            _balances[from] = fromBalance - amount;
+            _balances[from] = SafeMath.sub(fromBalance, amount);
             // Overflow not possible: the sum of all balances is capped by totalSupply, and the sum is preserved by
             // decrementing then incrementing.
-            _balances[to] += amount;
+            _balances[to] = SafeMath.add(_balances[to], amount);
         }
 
         emit Transfer(from, to, amount);
@@ -251,10 +252,10 @@ contract ERC20 is Context, IERC20, IERC20Metadata {
 
         _beforeTokenTransfer(address(0), account, amount);
 
-        _totalSupply += amount;
+        _totalSupply = SafeMath.add(_totalSupply, amount);
         unchecked {
             // Overflow not possible: balance + amount is at most totalSupply + amount, which is checked above.
-            _balances[account] += amount;
+            _balances[account] = SafeMath.add(_balances[account], amount);
         }
         emit Transfer(address(0), account, amount);
 
@@ -280,9 +281,9 @@ contract ERC20 is Context, IERC20, IERC20Metadata {
         uint256 accountBalance = _balances[account];
         require(accountBalance >= amount, "ERC20: burn amount exceeds balance");
         unchecked {
-            _balances[account] = accountBalance - amount;
+            _balances[account] = SafeMath.sub(accountBalance, amount);
             // Overflow not possible: amount <= accountBalance <= totalSupply.
-            _totalSupply -= amount;
+            _totalSupply = SafeMath.sub(_totalSupply, amount);
         }
 
         emit Transfer(account, address(0), amount);
@@ -324,7 +325,7 @@ contract ERC20 is Context, IERC20, IERC20Metadata {
         if (currentAllowance != type(uint256).max) {
             require(currentAllowance >= amount, "ERC20: insufficient allowance");
             unchecked {
-                _approve(owner, spender, currentAllowance - amount);
+                _approve(owner, spender, SafeMath.sub(currentAllowance, amount));
             }
         }
     }
